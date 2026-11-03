@@ -126,6 +126,19 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             border: 2px solid #ffd700;
         }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to bottom, #b22222, #8b0000);
+        }
+        button:disabled {
+            background: #cccccc;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            border: 2px solid #999;
+        }
         .audio-btn {
             background: linear-gradient(to right, #0d47a1, #1976d2);
             margin-top: 10px;
@@ -260,41 +273,66 @@
         const pauseBtn = document.getElementById('pause-btn');
         const audioStatus = document.getElementById('audio-status');
         let isPlaying = false;
-        let currentAudio = null;
+        let audioPage = 0;
+
+        // One reusable audio element keeps mobile browsers unlocked after the first tap.
+        const currentAudio = new Audio();
+        currentAudio.preload = 'auto';
+
         let bgMusic = new Audio('background-music.mp3');
         bgMusic.loop = true;
         bgMusic.volume = 0.25;
+
+        // Preload the cover and page 1 audio
+        const preloadedAudio = new Map();
+        function preloadPage(pageNum) {
+            if (pageNum < 0 || pageNum > 1) return;
+            const src = `audio/page-${pageNum}.mp3`;
+            if (preloadedAudio.has(src)) return;
+            const audio = new Audio();
+            audio.preload = 'auto';
+            audio.src = src;
+            preloadedAudio.set(src, audio);
+        }
+
         document.body.addEventListener('click', () => bgMusic.play().catch(e => {}), { once: true });
 
+        currentAudio.addEventListener('ended', () => {
+            isPlaying = false;
+            playBtn.textContent = "Play Story";
+            if (audioPage === 0) {
+                currentPage = 1;
+                showPage(1);
+                setTimeout(() => playPageAudio(1), 500);
+            } else if (audioPage === 1) {
+                audioStatus.textContent = "Preview complete";
+                showEtsyPopup();
+            }
+        });
+
         function playPageAudio(pageNum) {
-            if (pageNum > 1) return;
-            if (currentAudio) currentAudio.pause();
-            currentAudio = new Audio(`audio/page-${pageNum}.mp3`);
+            if (pageNum < 0 || pageNum > 1) return;
+            audioPage = pageNum;
+            currentAudio.pause();
+            currentAudio.src = `audio/page-${pageNum}.mp3`;
+            currentAudio.load();
             isPlaying = true;
             playBtn.textContent = "Playing...";
             audioStatus.textContent = `Playing ${pageNum === 0 ? 'Cover' : 'Page 1'}`;
-            currentAudio.play().catch(e => {
-                audioStatus.textContent = "Audio failed";
-                isPlaying = false;
-                playBtn.textContent = "Play Story";
-                if (bgMusic) bgMusic.pause();
-            });
-            currentAudio.onended = () => {
-                isPlaying = false;
-                playBtn.textContent = "Play Story";
-                if (pageNum === 0) {
-                    currentPage = 1;
-                    showPage(1);
-                    setTimeout(() => playPageAudio(1), 500);
-                } else if (pageNum === 1) {
-                    showEtsyPopup();
-                }
-            };
+            preloadPage(pageNum + 1);
+            const playPromise = currentAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    audioStatus.textContent = "Tap Play Story to start";
+                    isPlaying = false;
+                    playBtn.textContent = "Play Story";
+                    if (bgMusic) bgMusic.pause();
+                });
+            }
         }
 
-        window.addEventListener('load', () => {
-            setTimeout(() => playPageAudio(0), 1000);
-        });
+        preloadPage(0);
+        preloadPage(1);
 
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
@@ -305,7 +343,7 @@
 
         pauseBtn.addEventListener('click', () => {
             if (isPlaying) {
-                if (currentAudio) currentAudio.pause();
+                currentAudio.pause();
                 if (bgMusic) bgMusic.pause();
                 isPlaying = false;
                 playBtn.textContent = "Play Story";
@@ -340,7 +378,7 @@
         }
 
         showPage(0);
-        audioStatus.textContent = "Loading...";
+        audioStatus.textContent = "Tap Play Story to start";
 
         // ✅ Snowflakes — behind book, in front of stars
         function createSnowflakes() {
