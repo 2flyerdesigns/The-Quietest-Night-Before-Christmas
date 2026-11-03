@@ -114,7 +114,8 @@
             padding: 0 20px 20px;
         }
         button {
-            background: linear-gradient(to bottom, #8b0000, #b22222);
+            background-color: #8b0000;
+            background-image: linear-gradient(to bottom, #8b0000, #b22222);
             color: #ffeb3b;
             border: none;
             padding: 12px 25px;
@@ -122,14 +123,20 @@
             font-family: 'Mountains of Christmas', cursive;
             font-size: 1.4rem;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s, color 0.3s;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             border: 2px solid #ffd700;
+            -webkit-appearance: none;
+            appearance: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(to bottom, #b22222, #8b0000);
+        @media (hover: hover) and (pointer: fine) {
+            button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+                background-color: #b22222;
+                background-image: linear-gradient(to bottom, #b22222, #8b0000);
+            }
         }
         button:disabled {
             background: #cccccc;
@@ -140,14 +147,21 @@
             border: 2px solid #999;
         }
         .audio-btn {
-            background: linear-gradient(to right, #0d47a1, #1976d2);
+            /* v3 flash fix: flat opaque colour, no gradient swap, no transform on hover */
+            background-color: #0d47a1;
+            background-image: none;
             margin-top: 10px;
             padding: 12px 25px;
             font-size: 1.4rem;
             color: white;
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
-        .audio-controls .audio-btn:hover {
-            background: linear-gradient(to bottom, #b22222, #8b0000);
+        @media (hover: hover) and (pointer: fine) {
+            .audio-controls .audio-btn:hover {
+                transform: none;
+                background-color: #b22222;
+                background-image: none;
+            }
         }
         .page-indicator { 
             text-align: center; 
